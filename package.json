@@ -7,7 +7,13 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server.js",
+    "voice-server": "node server.js",
+    "predev": "node scripts/build-css.mjs",
+    "prebuild": "node scripts/build-css.mjs",
+    "prebuild:live": "node scripts/build-css.mjs",
+    "build:live": "vite build --outDir live-preview"
   },
   "dependencies": {
     "lucide-react": "^1.48.0",

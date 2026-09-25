@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
+import { schemes } from './schemes';
+import VoiceField from './VoiceField';
+import { t } from './i18n';
 import {
   ShieldCheck, BarChart3, UserCheck, Upload, CheckCircle2,
   AlertTriangle, XCircle, FileText, Sparkles, ArrowRight,
-  Award, DollarSign, Download, MessageSquare, Globe, Clock, Check,
-  ExternalLink, Search, Filter, HelpCircle, CheckCircle
+  Award, DollarSign, Download, MessageSquare, Globe, Clock,
+  ExternalLink
 } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('applicant');
-  const [language, setLanguage] = useState('EN');
+  const [language, setLanguage] = useState(() => localStorage.getItem('siteLanguage') === 'HI' ? 'HI' : 'EN');
+  const translate = key => t(language, key);
+  const [voiceLanguage, setVoiceLanguage] = useState('hi');
+  const [lowData, setLowData] = useState(() => localStorage.getItem('lowData') === 'true' || navigator.connection?.saveData === true);
+  const [schemeQuery, setSchemeQuery] = useState('');
+  const [expandedScheme, setExpandedScheme] = useState(null);
+  const [schemeProvider, setSchemeProvider] = useState('All');
   const [showSmsModal, setShowSmsModal] = useState(false);
   const [lastNotifiedApp, setLastNotifiedApp] = useState(null);
 
@@ -178,9 +187,17 @@ export default function App() {
   const approvedApps = applications.filter(a => a.status === "APPROVED_L1").length;
   const femalePercentage = Math.round((applications.filter(a => a.gender === "Female").length / totalApps) * 100) || 0;
   const pvtgCount = applications.filter(a => a.isPvtg).length;
+  const filteredSchemes = schemes.filter(scheme =>
+    (schemeProvider === 'All' || scheme.provider.includes(schemeProvider)) &&
+    `${scheme.name} ${scheme.nameHi} ${scheme.summary} ${scheme.summaryHi} ${scheme.level} ${scheme.eligibility} ${scheme.eligibilityHi}`.toLocaleLowerCase().includes(schemeQuery.toLocaleLowerCase())
+  );
+  const changeLowData = () => setLowData(value => {
+    localStorage.setItem('lowData', String(!value));
+    return !value;
+  });
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 font-sans selection:bg-emerald-100 selection:text-emerald-900">
+    <div lang={language === 'HI' ? 'hi' : 'en'} className={`min-h-screen flex flex-col bg-slate-100 font-sans selection:bg-emerald-100 selection:text-emerald-900 ${lowData ? 'low-data' : ''}`}>
 
       {/* ========================================================================= */}
       {/* 1. OFFICIAL GOV HEADER WITH EMBLEM & TRICOLOR TOP STRIP                   */}
@@ -188,33 +205,25 @@ export default function App() {
       <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 via-white to-emerald-600"></div>
 
       <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
+        <div className="portal-header-inner max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
 
           {/* Ministry Brand & National Emblem */}
           <div className="flex items-center gap-4">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"
-              alt="National Emblem of India"
-              className="h-12 w-auto object-contain drop-shadow-xs"
-            />
+            <div className="portal-mark" aria-hidden="true"><ShieldCheck size={26} strokeWidth={1.8} /></div>
             <div className="border-l border-slate-300 pl-4">
               <div className="flex items-center gap-2">
-                <span className="text-base font-black tracking-tight text-slate-900">TRIBAL-SETU</span>
+                <span className="text-base font-black tracking-tight text-slate-900">{translate('TRIBAL-SETU')}</span>
                 <span className="bg-emerald-700 text-white text-[10px] font-extrabold px-2 py-0.5 rounded shadow-xs tracking-wider">
-                  MoTA • GOVT OF INDIA
+{translate('Demo portal')}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-medium">
-                {language === 'EN'
-                  ? 'Ministry of Tribal Affairs | National Fellowship & Overseas Scholarship Platform'
-                  : 'जनजातीय कार्य मंत्रालय | राष्ट्रीय अध्येतावृत्ति एवं विदेश छात्रवृत्ति मंच'}
-              </p>
+              <p className="text-xs text-slate-500 font-medium">{translate('Scholarship information and application prototype')}</p>
             </div>
           </div>
 
           {/* Navigation Controls */}
-          <div className="flex items-center gap-3">
-            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <div className="portal-controls flex items-center gap-3">
+            <div className="portal-nav flex bg-slate-100 p-1 rounded-xl border border-slate-200">
               <button
                 onClick={() => setActiveTab('applicant')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'applicant' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
@@ -250,9 +259,13 @@ export default function App() {
               </button>
             </div>
 
+            <button type="button" onClick={changeLowData} aria-pressed={lowData}
+              className="text-xs font-bold bg-white border border-slate-300 px-3 py-1.5 rounded-xl text-slate-700">
+              {translate(lowData ? 'Low data: On' : 'Low data: Off')}
+            </button>
             {/* Language Toggle */}
             <button
-              onClick={() => setLanguage(language === 'EN' ? 'HI' : 'EN')}
+              onClick={() => setLanguage(current => { const next = current === 'EN' ? 'HI' : 'EN'; localStorage.setItem('siteLanguage', next); return next; })}
               className="flex items-center gap-1.5 text-xs font-bold bg-white hover:bg-slate-50 border border-slate-300 px-3 py-1.5 rounded-xl text-slate-700 shadow-xs transition"
             >
               <Globe className="w-3.5 h-3.5 text-emerald-700" />
@@ -271,25 +284,77 @@ export default function App() {
         {activeTab === 'applicant' && (
           <div className="max-w-4xl mx-auto space-y-6">
 
+            <div className="portal-notice" role="note">{translate('Demo portal · Not an official government website')}</div>
             {/* Hero Motivational Banner */}
             <div className="relative rounded-2xl overflow-hidden shadow-md bg-gradient-to-r from-emerald-950 via-emerald-900 to-slate-900 text-white p-8">
               <div className="relative z-10 max-w-xl">
                 <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider">
-                  Academic Year 2026-27 Registrations Open
+                  {translate('Academic Year 2026-27 Registrations Open')}
                 </span>
                 <h2 className="text-2xl font-black mt-3 leading-tight">
-                  Empowering Scheduled Tribe Scholars with World-Class Higher Education
+                  {translate('Empowering Scheduled Tribe Scholars with World-Class Higher Education')}
                 </h2>
                 <p className="text-xs text-emerald-200/90 mt-2 leading-relaxed">
-                  Fast-track digital processing with automated AI document verification for the National Fellowship (NFST) and National Overseas Scholarship (NOS).
+                  {translate('Fast-track digital processing with automated AI document verification for the National Fellowship (NFST) and National Overseas Scholarship (NOS).')}
                 </p>
               </div>
-              <img
+              {!lowData && <img loading="lazy"
                 src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=500&auto=format&fit=crop&q=80"
-                alt="Students studying"
+                alt={translate('Students studying')}
                 className="absolute right-0 top-0 bottom-0 w-1/3 object-cover opacity-20 mask-radial"
-              />
+              />}
             </div>
+
+            <section className="steps-panel" aria-label={translate('How to use this portal')}>
+              <h3>{translate('How to use this portal')}</h3>
+              <div className="steps-grid">
+                <div><strong>{translate('1. Find a scheme')}</strong><p>{translate('Search across ST schemes and compare basic support.')}</p></div>
+                <div><strong>{translate('2. Check the rules')}</strong><p>{translate('Open the scheme summary and verify details at the source.')}</p></div>
+                <div><strong>{translate('3. Use the right portal')}</strong><p>{translate('Apply only through the linked official website.')}</p></div>
+              </div>
+            </section>
+            <section className="scheme-directory" aria-labelledby="scheme-heading">
+              <div className="scheme-heading">
+                <div>
+                  <h3 id="scheme-heading">{translate('Explore ST scholarships and fellowships')}</h3>
+                  <p>{translate('Official scheme links verified 25 September 2026. Check the linked portal for eligibility, application route and current dates.')}</p>
+                </div>
+                <span>{filteredSchemes.length} {translate('schemes')}</span>
+              </div>
+              <div className="scheme-filters">
+                <label>{translate('Search schemes')}
+                  <input type="search" value={schemeQuery} onChange={event => setSchemeQuery(event.target.value)} placeholder={language === 'HI' ? 'नाम, शिक्षा स्तर या सहायता खोजें' : 'Search by name, study level or support'} />
+                </label>
+                <label>{translate('Portal')}
+                  <select value={schemeProvider} onChange={event => setSchemeProvider(event.target.value)}>
+                    <option value="All">{translate('All')}</option><option value="MahaDBT">{translate('MahaDBT')}</option><option value="Ministry of Tribal Affairs">{translate('Ministry of Tribal Affairs')}</option><option value="Ministry of Education">{translate('Ministry of Education')}</option>
+                  </select>
+                </label>
+              </div>
+              <div className="scheme-list" aria-live="polite">
+                {filteredSchemes.map(scheme => <article key={scheme.name} className="scheme-item">
+                  <div className="scheme-item-main">
+                    <small>{translate(scheme.provider.split(' · ')[0])} · {translate(scheme.level)}</small>
+                    <h4>{language === 'HI' ? scheme.nameHi : scheme.name}</h4>
+                    <p>{language === 'HI' ? scheme.summaryHi : scheme.summary}</p>
+                    {expandedScheme === scheme.name && <div className="scheme-details">
+                      <p><strong>{translate('Who can apply')}:</strong> {language === 'HI' ? scheme.eligibilityHi : scheme.eligibility}</p>
+                      <p><strong>{translate('Support offered')}:</strong> {language === 'HI' ? scheme.benefitHi : scheme.benefit}</p>
+                      <p><strong>{translate('Apply on')}:</strong> {translate(scheme.provider.split(' · ')[0])}</p>
+                    </div>}
+                  </div>
+                  <div className="scheme-actions">
+                    <button type="button" aria-expanded={expandedScheme === scheme.name} onClick={() => setExpandedScheme(expandedScheme === scheme.name ? null : scheme.name)}>
+                      {translate(expandedScheme === scheme.name ? 'Hide details' : 'See scheme details')}
+                    </button>
+                    <a href={scheme.url} target="_blank" rel="noopener noreferrer" aria-label={`${translate('Official details')}: ${language === 'HI' ? scheme.nameHi : scheme.name}`}>
+                      {translate('Official details')} <ExternalLink size={14} />
+                    </a>
+                  </div>
+                </article>)}
+                {!filteredSchemes.length && <p>{translate('No schemes match your search.')}</p>}
+              </div>
+            </section>
 
             {submissionSuccess ? (
               <div className="bg-white p-8 rounded-2xl shadow-sm border border-emerald-200 text-center animate-fadeIn">
@@ -297,31 +362,31 @@ export default function App() {
                   <CheckCircle2 className="w-10 h-10" />
                 </div>
                 <h2 className="text-2xl font-black text-slate-800">
-                  {language === 'EN' ? 'Application Registered with MoTA!' : 'आवेदन सफलतापूर्वक पंजीकृत हो गया!'}
+                  {language === 'EN' ? 'Demo application saved for this session' : 'नमूना आवेदन इस सत्र में सहेजा गया'}
                 </h2>
-                <p className="text-xs text-slate-500 mt-1">Application Reference No: <span className="font-mono font-bold text-emerald-700">{submissionSuccess.id}</span></p>
+                <p className="text-xs text-slate-500 mt-1">{translate('Application Reference No:')} <span className="font-mono font-bold text-emerald-700">{submissionSuccess.id}</span></p>
 
                 {/* Digital Verification Receipt */}
                 <div className="mt-6 bg-slate-50 p-6 rounded-2xl border border-slate-200 text-left max-w-lg mx-auto space-y-3">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-200">
                     <span className="font-bold text-xs text-slate-700 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-500" /> Instant AI Scrutiny Report
+                      <Sparkles className="w-4 h-4 text-amber-500" /> {translate('Illustrative scrutiny summary')}
                     </span>
                     <span className="bg-emerald-100 text-emerald-800 font-black text-xs px-2.5 py-0.5 rounded-full">
-                      {submissionSuccess.aiScore}% Match
+                      {submissionSuccess.aiScore}% {translate('Match')}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-600">
-                    <span>Document Tamper Status:</span>
-                    <span className="font-bold text-emerald-600">PASS (Zero Metadata Alteration)</span>
+                    <span>{translate('Document Tamper Status:')}</span>
+                    <span className="font-bold text-emerald-600">{translate('Sample check passed')}</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-600">
-                    <span>State Revenue Registry Match:</span>
-                    <span className="font-bold text-emerald-600">e-District Live Signature Valid</span>
+                    <span>{translate('State Revenue Registry Match:')}</span>
+                    <span className="font-bold text-emerald-600">{translate('Demo record shown')}</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-600">
-                    <span>Workflow Stage:</span>
-                    <span className="font-bold text-blue-700">Assigned to Level-1 Desk Officer</span>
+                    <span>{translate('Workflow Stage:')}</span>
+                    <span className="font-bold text-blue-700">{translate('Shown in sample scrutiny desk')}</span>
                   </div>
                 </div>
 
@@ -330,13 +395,13 @@ export default function App() {
                     onClick={() => setActiveTab('scrutiny')}
                     className="bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold px-6 py-3 rounded-xl flex items-center gap-2 shadow-md transition"
                   >
-                    View in Officer Scrutiny Desk <ArrowRight className="w-4 h-4" />
+                    {translate('View in Officer Scrutiny Desk')} <ArrowRight className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setSubmissionSuccess(null)}
                     className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-5 py-3 rounded-xl transition"
                   >
-                    Submit Another Application
+                    {translate('Submit Another Application')}
                   </button>
                 </div>
               </div>
@@ -346,53 +411,64 @@ export default function App() {
                   <h3 className="text-lg font-black text-slate-800">
                     {language === 'EN' ? 'Unified Scheme Application' : 'एकीकृत योजना आवेदन पत्र'}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Configurable Scheme Engine: Field criteria and document rules change based on your selected scheme.</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{translate('Configurable Scheme Engine: Field criteria and document rules change based on your selected scheme.')}</p>
                 </div>
 
-                <form onSubmit={handleFormSubmit} className="space-y-6">
+                <form onSubmit={handleFormSubmit} className="app-form space-y-6">
+                  <div className="voice-panel">
+                    <div><strong>{translate('Bhashini voice assisted form filling')}</strong><p>{translate('Choose a language, tap Speak next to a text field, and check the result. The microphone records for up to 12 seconds.')}</p></div>
+                    <label>{translate('Speech language')} <select value={voiceLanguage} onChange={event => setVoiceLanguage(event.target.value)} disabled={lowData}>
+                      <option value="hi">हिन्दी</option><option value="mr">मराठी</option><option value="en">{translate('English')}</option>
+                    </select></label>
+                    {lowData && <p>{translate('Voice is paused in low data mode. All fields remain available for typing.')}</p>}
+                  </div>
 
                   {/* Scheme Selection Cards with Rich Photos */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Select Scheme</label>
-                    <div className="grid grid-cols-2 gap-4">
+                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">{translate('Select Scheme')}</label>
+                    <div className="grid grid-cols-2 gap-4" role="radiogroup" aria-label={translate("Select Scheme")}>
 
                       {/* NFST Card */}
                       <div
                         onClick={() => setFormScheme('NFST')}
+                        role="radio" aria-checked={formScheme === 'NFST'} tabIndex={0}
+                        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setFormScheme('NFST'); } }}
                         className={`relative rounded-xl border-2 p-5 cursor-pointer transition overflow-hidden group ${formScheme === 'NFST' ? 'border-emerald-600 bg-emerald-50/60 shadow-sm' : 'border-slate-200 hover:border-slate-300 bg-white'
                           }`}
                       >
                         <div className="flex items-start justify-between relative z-10">
                           <div>
-                            <span className="font-black text-slate-900 text-sm">NFST (National Fellowship)</span>
-                            <span className="block text-[10px] font-bold text-emerald-700 mt-0.5">For Higher Education in India</span>
+                            <span className="font-black text-slate-900 text-sm">{translate('NFST (National Fellowship)')}</span>
+                            <span className="block text-[10px] font-bold text-emerald-700 mt-0.5">{translate('For Higher Education in India')}</span>
                           </div>
                           <span className="bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            750 Slots
+                            {translate('750 Slots')}
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 mt-2 relative z-10 leading-relaxed">
-                          For ST scholars pursuing regular M.Phil/Ph.D. in UGC/AICTE recognized universities and IITs. <span className="font-semibold text-slate-700">₹37,000/mo JRF stipend + HRA</span>.
+                          {translate('For ST scholars pursuing regular M.Phil/Ph.D. in UGC/AICTE recognized universities and IITs.')} <span className="font-semibold text-slate-700">{translate('₹37,000/mo JRF stipend + HRA')}</span>.
                         </p>
                       </div>
 
                       {/* NOS Card */}
                       <div
                         onClick={() => setFormScheme('NOS')}
+                        role="radio" aria-checked={formScheme === 'NOS'} tabIndex={0}
+                        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setFormScheme('NOS'); } }}
                         className={`relative rounded-xl border-2 p-5 cursor-pointer transition overflow-hidden group ${formScheme === 'NOS' ? 'border-blue-600 bg-blue-50/60 shadow-sm' : 'border-slate-200 hover:border-slate-300 bg-white'
                           }`}
                       >
                         <div className="flex items-start justify-between relative z-10">
                           <div>
-                            <span className="font-black text-slate-900 text-sm">NOS (Overseas Scholarship)</span>
-                            <span className="block text-[10px] font-bold text-blue-700 mt-0.5">For Studies Abroad</span>
+                            <span className="font-black text-slate-900 text-sm">{translate('NOS (Overseas Scholarship)')}</span>
+                            <span className="block text-[10px] font-bold text-blue-700 mt-0.5">{translate('For Studies Abroad')}</span>
                           </div>
                           <span className="bg-blue-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            100 Slots
+                            {translate('100 Slots')}
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 mt-2 relative z-10 leading-relaxed">
-                          For Master’s and Ph.D. abroad in Top 500 QS World Ranked Universities. <span className="font-semibold text-slate-700">$15,400/yr + Full Tuition + Flights</span>.
+                          {translate('For Master’s and Ph.D. abroad in Top 500 QS World Ranked Universities.')} <span className="font-semibold text-slate-700">{translate('$15,400/yr + Full Tuition + Flights')}</span>.
                         </p>
                       </div>
                     </div>
@@ -401,59 +477,61 @@ export default function App() {
                   {/* Personal Details */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Scholar Full Name</label>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">{translate('Scholar Full Name')}</label>
+                      <VoiceField label={translate("Scholar Full Name")} uiLanguage={language} language={voiceLanguage} lowData={lowData} onResult={setFormName} />
                       <input
                         required
                         type="text"
-                        placeholder="e.g. Birsa Purty"
+                        placeholder={language === 'HI' ? 'उदाहरण: बिरसा पुरती' : 'e.g. Birsa Purty'}
                         value={formName}
                         onChange={e => setFormName(e.target.value)}
                         className="w-full text-xs p-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Gender</label>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">{translate('Gender')}</label>
                       <select
                         value={formGender}
                         onChange={e => setFormGender(e.target.value)}
                         className="w-full text-xs p-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                       >
-                        <option>Female</option>
-                        <option>Male</option>
-                        <option>Other</option>
+                        <option value="Female">{translate('Female')}</option>
+                        <option value="Male">{translate('Male')}</option>
+                        <option value="Other">{translate('Other')}</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Sub-Tribe Community</label>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">{translate('Sub-Tribe Community')}</label>
+                      <VoiceField label={translate("Sub-Tribe Community")} uiLanguage={language} language={voiceLanguage} lowData={lowData} onResult={setFormSubCaste} />
                       <input
                         required
                         type="text"
-                        placeholder="e.g. Santhal, Gond, Bhil"
+                        placeholder={language === 'HI' ? 'उदाहरण: संथाल, गोंड, भील' : 'e.g. Santhal, Gond, Bhil'}
                         value={formSubCaste}
                         onChange={e => setFormSubCaste(e.target.value)}
                         className="w-full text-xs p-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">State of Domicile</label>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">{translate('State of Domicile')}</label>
                       <select
                         value={formState}
                         onChange={e => setFormState(e.target.value)}
                         className="w-full text-xs p-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                       >
-                        <option>Odisha</option>
-                        <option>Jharkhand</option>
-                        <option>Madhya Pradesh</option>
-                        <option>Chhattisgarh</option>
-                        <option>Rajasthan</option>
-                        <option>Maharashtra</option>
+                        <option value="Odisha">{translate('Odisha')}</option>
+                        <option value="Jharkhand">{translate('Jharkhand')}</option>
+                        <option value="Madhya Pradesh">{translate('Madhya Pradesh')}</option>
+                        <option value="Chhattisgarh">{translate('Chhattisgarh')}</option>
+                        <option value="Rajasthan">{translate('Rajasthan')}</option>
+                        <option value="Maharashtra">{translate('Maharashtra')}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Family Annual Income (₹)</label>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">{translate('Family Annual Income (₹)')}</label>
                       <input
                         required
                         type="number"
@@ -474,19 +552,20 @@ export default function App() {
                           onChange={e => setFormIsPvtg(e.target.checked)}
                           className="w-4 h-4 text-purple-700 rounded"
                         />
-                        Scholar belongs to a Particularly Vulnerable Tribal Group (PVTG Priority)
+                        {translate('Scholar belongs to a Particularly Vulnerable Tribal Group (PVTG Priority)')}
                       </label>
-                      <p className="text-[11px] text-purple-700/80 ml-6 mt-0.5">MoTA gives special priority allocation to 75 recognized PVTG communities across India.</p>
+                      <p className="text-[11px] text-purple-700/80 ml-6 mt-0.5">{translate('MoTA gives special priority allocation to 75 recognized PVTG communities across India.')}</p>
                     </div>
-                    <span className="text-[10px] font-extrabold bg-purple-200 text-purple-900 px-2 py-0.5 rounded">STATUTORY QUOTA</span>
+                    <span className="text-[10px] font-extrabold bg-purple-200 text-purple-900 px-2 py-0.5 rounded">{translate('STATUTORY QUOTA')}</span>
                   </div>
 
                   {/* Dynamic Academic Details */}
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-slate-600 mb-1">
-                        {formScheme === 'NFST' ? 'Host Indian Institute' : 'Foreign University (Top 500 QS)'}
+                        {translate(formScheme === 'NFST' ? 'Host Indian Institute' : 'Foreign University (Top 500 QS)')}
                       </label>
+                      <VoiceField label={translate("Host Indian Institute")} uiLanguage={language} language={voiceLanguage} lowData={lowData} onResult={setFormInstitution} />
                       <input
                         required
                         type="text"
@@ -496,7 +575,8 @@ export default function App() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Enrolled Degree</label>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">{translate('Enrolled Degree')}</label>
+                      <VoiceField label={translate("Enrolled Degree")} uiLanguage={language} language={voiceLanguage} lowData={lowData} onResult={setFormDegree} />
                       <input
                         required
                         type="text"
@@ -507,7 +587,7 @@ export default function App() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-slate-600 mb-1">
-                        {formScheme === 'NFST' ? 'Qualifying Exam Marks (%)' : 'Foreign University QS Rank'}
+                        {translate(formScheme === 'NFST' ? 'Qualifying Exam Marks (%)' : 'Foreign University QS Rank')}
                       </label>
                       <input
                         required
@@ -525,8 +605,8 @@ export default function App() {
                     <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 mx-auto mb-2">
                       <Upload className="w-6 h-6" />
                     </div>
-                    <p className="text-xs font-bold text-slate-800">Attach Verified ST Caste Certificate</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Supports PDF, PNG, JPG. Optical Character Recognition (OCR) will run automatically.</p>
+                    <p className="text-xs font-bold text-slate-800">{translate('Attach Verified ST Caste Certificate')}</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{translate('Supports PDF, PNG, JPG. Optical Character Recognition (OCR) will run automatically.')}</p>
                     <input
                       type="file"
                       onChange={e => setUploadedFile(e.target.files[0])}
@@ -534,11 +614,23 @@ export default function App() {
                     />
                   </div>
 
+                  <section className="application-summary" aria-label={translate('Application summary')}>
+                    <h4>{translate('Application summary')}</h4>
+                    <p>{translate('Review details before submitting. This prototype does not verify eligibility or submit to government portals.')}</p>
+                    <dl>
+                      <div><dt>{translate('Selected scheme')}</dt><dd>{formScheme}</dd></div>
+                      <div><dt>{translate('Applicant name')}</dt><dd>{formName || '—'}</dd></div>
+                      <div><dt>{translate('State')}</dt><dd>{translate(formState)}</dd></div>
+                      <div><dt>{translate('Annual income')}</dt><dd>₹{Number(formIncome || 0).toLocaleString('en-IN')}</dd></div>
+                      <div><dt>{translate('Institute')}</dt><dd>{formInstitution || '—'}</dd></div>
+                      <div><dt>{translate('Certificate')}</dt><dd>{uploadedFile?.name || translate('Not attached')}</dd></div>
+                    </dl>
+                  </section>
                   <button
                     type="submit"
                     className="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs py-3.5 rounded-xl shadow-md transition flex items-center justify-center gap-2"
                   >
-                    <Sparkles className="w-4 h-4 text-amber-300" /> Run AI Scrutiny & Submit Application
+                    <Sparkles className="w-4 h-4 text-amber-300" /> {translate('Run AI Scrutiny & Submit Application')}
                   </button>
                 </form>
               </div>
@@ -550,13 +642,13 @@ export default function App() {
         {/* TAB 2: AI SCRUTINY DESK WITH REALISTIC CERTIFICATE PREVIEW                */}
         {/* ========================================================================= */}
         {activeTab === 'scrutiny' && (
-          <div className="grid grid-cols-12 gap-5 h-[calc(100vh-130px)]">
+          <div className="scrutiny-layout grid grid-cols-12 gap-5 h-[calc(100vh-130px)]">
 
             {/* Left Queue with Scholar Photos */}
             <div className="col-span-3 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col">
               <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Pending Queue</span>
-                <span className="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-bold">{applications.length} Files</span>
+                <span className="text-xs font-black text-slate-700 uppercase tracking-wider">{translate('Pending Queue')}</span>
+                <span className="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-bold">{applications.length} {translate('Files')}</span>
               </div>
 
               <div className="space-y-2.5 mt-3 overflow-y-auto flex-1 pr-1">
@@ -568,7 +660,7 @@ export default function App() {
                       }`}
                   >
                     <img
-                      src={app.avatar}
+                      src={lowData ? undefined : app.avatar} loading="lazy"
                       alt={app.name}
                       className="w-10 h-10 rounded-full object-cover border-2 border-emerald-600/40"
                     />
@@ -578,13 +670,13 @@ export default function App() {
                         <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${app.status === 'APPROVED_L1' ? 'bg-emerald-100 text-emerald-800' :
                             app.status === 'DEFICIENCY_RAISED' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
                           }`}>
-                          {app.status}
+                          {translate(app.status)}
                         </span>
                       </div>
                       <p className="font-bold text-slate-800 text-xs truncate mt-0.5">{app.name}</p>
                       <div className="flex justify-between text-[10px] text-slate-500 mt-1">
                         <span>{app.scheme} • {app.subCaste}</span>
-                        <span className="font-bold text-emerald-700">{app.aiScore}% Match</span>
+                        <span className="font-bold text-emerald-700">{app.aiScore}% {translate('Match')}</span>
                       </div>
                     </div>
                   </div>
@@ -601,7 +693,7 @@ export default function App() {
                 </span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${selectedApp.tamperStatus.includes('PASS') ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
                   }`}>
-                  {selectedApp.tamperStatus}
+                  {translate(selectedApp.tamperStatus)}
                 </span>
               </div>
 
@@ -612,7 +704,7 @@ export default function App() {
                   {/* Watermark Emblem */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5">
                     <img
-                      src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"
+                      src={lowData ? undefined : "https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"} loading="lazy"
                       alt="Watermark"
                       className="w-64 h-64 object-contain"
                     />
@@ -621,31 +713,31 @@ export default function App() {
                   {/* Certificate Top Header */}
                   <div className="text-center pb-3 border-b-2 border-slate-800 relative z-10">
                     <img
-                      src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"
+                      src={lowData ? undefined : "https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"} loading="lazy"
                       alt="State Emblem"
                       className="h-9 mx-auto mb-1 opacity-90"
                     />
                     <p className="font-sans text-[10px] font-black uppercase tracking-widest text-slate-800">
                       GOVERNMENT OF {selectedApp.state.toUpperCase()}
                     </p>
-                    <p className="font-sans text-[9px] font-bold text-slate-600">OFFICE OF THE SUB-DIVISIONAL MAGISTRATE</p>
+                    <p className="font-sans text-[9px] font-bold text-slate-600">{translate('OFFICE OF THE SUB-DIVISIONAL MAGISTRATE')}</p>
                     <p className="font-sans text-[11px] font-black underline tracking-wide mt-1 text-slate-900">
-                      CERTIFICATE OF SCHEDULED TRIBE CASTE
+                      {translate('CERTIFICATE OF SCHEDULED TRIBE CASTE')}
                     </p>
                   </div>
 
                   {/* Cert Registration Barcode */}
                   <div className="flex justify-between items-center my-3 text-[9px] font-sans text-slate-600 border-b border-dashed border-slate-300 pb-2 relative z-10">
                     <div>
-                      <p><span className="font-bold">Cert No:</span> {selectedApp.certNumber}</p>
-                      <p><span className="font-bold">Issue Date:</span> {selectedApp.issueDate}</p>
+                      <p><span className="font-bold">{translate('Cert No:')}</span> {selectedApp.certNumber}</p>
+                      <p><span className="font-bold">{translate('Issue Date:')}</span> {selectedApp.issueDate}</p>
                     </div>
                     <div className="text-right">
                       {/* Barcode graphic */}
                       <div className="font-mono text-xs tracking-widest bg-slate-900 text-white px-2 py-0.5 rounded">
                         ||| || |||| | ||||| |||
                       </div>
-                      <span className="text-[8px] text-slate-400 font-mono">e-District Digital Barcode</span>
+                      <span className="text-[8px] text-slate-400 font-mono">{translate('e-District Digital Barcode')}</span>
                     </div>
                   </div>
 
@@ -666,7 +758,7 @@ export default function App() {
                     </div>
 
                     <p>
-                      residing in the State of <span className="font-bold underline">{selectedApp.state}</span> belongs to the community recognized as:
+                      {translate('Resident of')} <span className="font-bold underline">{translate(selectedApp.state)}</span> {translate('recognized community')}:
                     </p>
 
                     {/* AI Bounding Box: Sub-Tribe */}
@@ -675,7 +767,7 @@ export default function App() {
                         AI OCR: RECOGNIZED TRIBE
                       </span>
                       <p className="font-bold text-xs text-slate-900 font-sans">
-                        {selectedApp.subCaste} (Scheduled Tribe under the Constitution Order 1950)
+                        {selectedApp.subCaste} ({translate('Scheduled Tribe under the Constitution Order 1950')})
                       </p>
                     </div>
 
@@ -689,9 +781,9 @@ export default function App() {
                     {/* Official Round Ink Seal */}
                     <div className="relative w-20 h-20 rounded-full border-2 border-purple-700 flex items-center justify-center text-center p-1 transform -rotate-12 opacity-85">
                       <div className="w-16 h-16 rounded-full border border-purple-600 flex flex-col justify-center items-center text-[7px] font-bold font-sans text-purple-800 leading-none">
-                        <span>GOVT OF INDIA</span>
-                        <span className="text-[6px] my-0.5">★ SEAL ★</span>
-                        <span>SDM OFFICE</span>
+                        <span>{translate('GOVT OF INDIA')}</span>
+                        <span className="text-[6px] my-0.5">{translate('★ SEAL ★')}</span>
+                        <span>{translate('SDM OFFICE')}</span>
                       </div>
                     </div>
 
@@ -701,7 +793,7 @@ export default function App() {
                         S. K. Mohapatra
                       </div>
                       <p className="text-[9px] font-bold text-slate-800">{selectedApp.issuingOfficer}</p>
-                      <p className="text-[8px] text-slate-500">Government of {selectedApp.state}</p>
+                      <p className="text-[8px] text-slate-500">{translate('Government of')} {translate(selectedApp.state)}</p>
                     </div>
                   </div>
                 </div>
@@ -714,7 +806,7 @@ export default function App() {
                 <div className="flex justify-between items-center pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     <img
-                      src={selectedApp.avatar}
+                      src={lowData ? undefined : selectedApp.avatar} loading="lazy"
                       alt={selectedApp.name}
                       className="w-9 h-9 rounded-full object-cover border border-slate-200"
                     />
@@ -725,14 +817,14 @@ export default function App() {
                   </div>
                   <div className="text-right">
                     <span className="text-xl font-black text-emerald-700">{selectedApp.aiScore}%</span>
-                    <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">AI Confidence</p>
+                    <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">{translate('AI Confidence')}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2.5 mt-3">
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
                     <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase">Candidate Claim vs Certificate</p>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase">{translate('Candidate Claim vs Certificate')}</p>
                       <p className="text-xs font-bold text-slate-800">{selectedApp.name}</p>
                     </div>
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -740,15 +832,15 @@ export default function App() {
 
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
                     <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase">Affirmative Category</p>
-                      <p className="text-xs font-bold text-slate-800">{selectedApp.subCaste} {selectedApp.isPvtg && "• PVTG Priority"}</p>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase">{translate('Affirmative Category')}</p>
+                      <p className="text-xs font-bold text-slate-800">{selectedApp.subCaste} {selectedApp.isPvtg && `• ${translate('PVTG Priority')}`}</p>
                     </div>
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   </div>
 
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
                     <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase">Verified Annual Income</p>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase">{translate('Verified Annual Income')}</p>
                       <p className="text-xs font-bold text-slate-800">₹{selectedApp.income.toLocaleString('en-IN')}</p>
                     </div>
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -757,10 +849,10 @@ export default function App() {
                   {selectedApp.flags.length > 0 && (
                     <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
                       <p className="text-xs font-bold text-amber-800 flex items-center gap-1.5 mb-1">
-                        <AlertTriangle className="w-4 h-4 text-amber-600" /> AI Discrepancies Flagged:
+                        <AlertTriangle className="w-4 h-4 text-amber-600" /> {translate('AI Discrepancies Flagged:')}
                       </p>
                       <ul className="list-disc list-inside text-xs text-amber-700">
-                        {selectedApp.flags.map((f, i) => <li key={i}>{f}</li>)}
+                        {selectedApp.flags.map((f, i) => <li key={i}>{translate(f)}</li>)}
                       </ul>
                     </div>
                   )}
@@ -771,7 +863,7 @@ export default function App() {
               <div className="pt-4 border-t border-slate-100 space-y-2.5">
                 <input
                   type="text"
-                  placeholder="Officer remarks / Deficiency explanation..."
+                  placeholder={translate('Officer remarks / Deficiency explanation...')}
                   value={officerRemark}
                   onChange={e => setOfficerRemark(e.target.value)}
                   className="w-full text-xs p-2.5 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -781,19 +873,19 @@ export default function App() {
                     onClick={() => handleOfficerAction("APPROVE")}
                     className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1 transition shadow-sm"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Approve L1
+                    <CheckCircle2 className="w-3.5 h-3.5" /> {translate('Approve L1')}
                   </button>
                   <button
                     onClick={() => handleOfficerAction("DEFICIENCY")}
                     className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1 transition shadow-sm"
                   >
-                    <AlertTriangle className="w-3.5 h-3.5" /> Flag Defect
+                    <AlertTriangle className="w-3.5 h-3.5" /> {translate('Flag Defect')}
                   </button>
                   <button
                     onClick={() => handleOfficerAction("REJECT")}
                     className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1 transition shadow-sm"
                   >
-                    <XCircle className="w-3.5 h-3.5" /> Reject
+                    <XCircle className="w-3.5 h-3.5" /> {translate('Reject')}
                   </button>
                 </div>
               </div>
@@ -812,14 +904,14 @@ export default function App() {
                   {language === 'EN' ? 'Automated Merit Ranking & Fellowship DBT Hub' : 'स्वचालित मेरिट सूची एवं अध्येतावृत्ति डीबीटी'}
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Algorithmic scoring applying 30% Female Quota, PVTG priority, and PFMS Direct Benefit Transfer batches.
+                  {translate('Algorithmic scoring applying 30% Female Quota, PVTG priority, and PFMS Direct Benefit Transfer batches.')}
                 </p>
               </div>
               <button
                 onClick={exportMeritCSV}
                 className="bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition"
               >
-                <Download className="w-4 h-4" /> Export Merit List (CSV)
+                <Download className="w-4 h-4" /> {translate('Export Merit List (CSV)')}
               </button>
             </div>
 
@@ -827,20 +919,20 @@ export default function App() {
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
               <h3 className="font-bold text-sm text-slate-800 mb-3 flex items-center gap-2">
                 <Award className="w-4 h-4 text-amber-500" />
-                Provisional Selection Merit List (Ranked Automatically by Scheme Rules)
+                {translate('Provisional Selection Merit List (Ranked Automatically by Scheme Rules)')}
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b">
                     <tr>
-                      <th className="p-3">Rank</th>
-                      <th className="p-3">Scholar</th>
-                      <th className="p-3">Scheme</th>
-                      <th className="p-3">Tribe</th>
-                      <th className="p-3">Affirmative Quota</th>
-                      <th className="p-3">Merit Score</th>
-                      <th className="p-3">Scrutiny Status</th>
-                      <th className="p-3">Fellowship Stipend</th>
+                      <th className="p-3">{translate('Rank')}</th>
+                      <th className="p-3">{translate('Scholar')}</th>
+                      <th className="p-3">{translate('Scheme')}</th>
+                      <th className="p-3">{translate('Tribe')}</th>
+                      <th className="p-3">{translate('Affirmative Quota')}</th>
+                      <th className="p-3">{translate('Merit Score')}</th>
+                      <th className="p-3">{translate('Scrutiny Status')}</th>
+                      <th className="p-3">{translate('Fellowship Stipend')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -850,7 +942,7 @@ export default function App() {
                         <tr key={app.id} className="hover:bg-slate-50/50">
                           <td className="p-3 font-bold text-emerald-800">#{index + 1}</td>
                           <td className="p-3 flex items-center gap-2.5">
-                            <img src={app.avatar} alt={app.name} className="w-8 h-8 rounded-full object-cover" />
+                            <img src={lowData ? undefined : app.avatar} loading="lazy" alt={app.name} className="w-8 h-8 rounded-full object-cover" />
                             <div>
                               <p className="font-bold text-slate-800 leading-tight">{app.name}</p>
                               <p className="text-[10px] text-slate-400 font-mono">{app.id}</p>
@@ -863,13 +955,13 @@ export default function App() {
                           </td>
                           <td className="p-3">{app.subCaste}</td>
                           <td className="p-3">
-                            {app.isPvtg && <span className="bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded text-[10px] mr-1">PVTG Priority</span>}
-                            {app.gender === 'Female' && <span className="bg-pink-100 text-pink-800 font-bold px-1.5 py-0.5 rounded text-[10px]">30% Female Quota</span>}
+                            {app.isPvtg && <span className="bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded text-[10px] mr-1">{translate('PVTG Priority')}</span>}
+                            {app.gender === 'Female' && <span className="bg-pink-100 text-pink-800 font-bold px-1.5 py-0.5 rounded text-[10px]">{translate('30% Female Quota')}</span>}
                           </td>
                           <td className="p-3 font-bold text-slate-800">{app.meritScore}%</td>
                           <td className="p-3">
                             <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${app.status.includes('APPROVED') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                              {app.status}
+                              {translate(app.status)}
                             </span>
                           </td>
                           <td className="p-3 font-mono font-bold text-emerald-700">
@@ -886,33 +978,33 @@ export default function App() {
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
               <h3 className="font-bold text-sm text-slate-800 mb-2 flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-emerald-600" />
-                Post-Award Fellowship Lifecycle (PFMS & DBT Tribal Automation)
+                {translate('Post-Award Fellowship Lifecycle (PFMS & DBT Tribal Automation)')}
               </h3>
-              <p className="text-xs text-slate-400 mb-4">Continuous digital oversight: University joining verification, bi-annual guide sign-offs, and automated stipend disbursements.</p>
+              <p className="text-xs text-slate-400 mb-4">{translate('Continuous digital oversight: University joining verification, bi-annual guide sign-offs, and automated stipend disbursements.')}</p>
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700">1. University Joining</span>
+                    <span className="text-xs font-bold text-slate-700">{translate('1. University Joining')}</span>
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1">Registrar joining report verified digitally via institutional email.</p>
+                  <p className="text-[11px] text-slate-500 mt-1">{translate('Registrar joining report verified digitally via institutional email.')}</p>
                 </div>
 
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700">2. Research Guide Approval</span>
+                    <span className="text-xs font-bold text-slate-700">{translate('2. Research Guide Approval')}</span>
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1">Bi-annual progress & attendance certified digitally by Ph.D. guide.</p>
+                  <p className="text-[11px] text-slate-500 mt-1">{translate('Bi-annual progress & attendance certified digitally by Ph.D. guide.')}</p>
                 </div>
 
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700">3. PFMS DBT Credit</span>
-                    <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">DIRECT TO AADHAAR</span>
+                    <span className="text-xs font-bold text-slate-700">{translate('3. PFMS DBT Credit')}</span>
+                    <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">{translate('DIRECT TO AADHAAR')}</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1">Automated electronic payment advice pushed to Public Financial Management System.</p>
+                  <p className="text-[11px] text-slate-500 mt-1">{translate('Automated electronic payment advice pushed to Public Financial Management System.')}</p>
                 </div>
               </div>
             </div>
@@ -929,58 +1021,58 @@ export default function App() {
                 <h2 className="text-xl font-black text-slate-800">
                   {language === 'EN' ? 'MoTA Leadership Real-Time Telemetry' : 'जनजातीय कार्य मंत्रालय - नेतृत्व टेलीमेट्री'}
                 </h2>
-                <p className="text-xs text-slate-500">Live oversight of affirmative action quotas, fund utilization & verification SLAs.</p>
+                <p className="text-xs text-slate-500">{translate('Live oversight of affirmative action quotas, fund utilization & verification SLAs.')}</p>
               </div>
               <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1.5 rounded-lg">
-                Academic Year 2026-27 Active
+                {translate('Academic Year 2026-27 Active')}
               </span>
             </div>
 
             {/* KPI Cards */}
             <div className="grid grid-cols-4 gap-4">
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <p className="text-xs font-bold text-slate-400 uppercase">Total Applications</p>
+                <p className="text-xs font-bold text-slate-400 uppercase">{translate('Total Applications')}</p>
                 <p className="text-3xl font-black text-slate-800 mt-1">{totalApps}</p>
-                <p className="text-[11px] text-emerald-600 mt-1 font-semibold">{approvedApps} Approved L1</p>
+                <p className="text-[11px] text-emerald-600 mt-1 font-semibold">{approvedApps} {translate('Approved L1')}</p>
               </div>
 
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <p className="text-xs font-bold text-slate-400 uppercase">Female Scholar Ratio</p>
+                <p className="text-xs font-bold text-slate-400 uppercase">{translate('Female Scholar Ratio')}</p>
                 <p className="text-3xl font-black text-emerald-600 mt-1">{femalePercentage}%</p>
-                <p className="text-[11px] text-emerald-600 mt-1 font-semibold">Exceeds 30% Statutory Mandate</p>
+                <p className="text-[11px] text-emerald-600 mt-1 font-semibold">{translate('Sample ratio from demo records')}</p>
               </div>
 
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <p className="text-xs font-bold text-slate-400 uppercase">PVTG Candidates</p>
+                <p className="text-xs font-bold text-slate-400 uppercase">{translate('PVTG Candidates')}</p>
                 <p className="text-3xl font-black text-purple-600 mt-1">{pvtgCount}</p>
-                <p className="text-[11px] text-purple-600 mt-1 font-semibold">Particularly Vulnerable Groups</p>
+                <p className="text-[11px] text-purple-600 mt-1 font-semibold">{translate('Particularly Vulnerable Groups')}</p>
               </div>
 
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <p className="text-xs font-bold text-slate-400 uppercase">Avg Scrutiny TAT</p>
-                <p className="text-3xl font-black text-amber-600 mt-1">1.8 Days</p>
-                <p className="text-[11px] text-slate-500 mt-1">Down from 6 months (manual)</p>
+                <p className="text-xs font-bold text-slate-400 uppercase">{translate('Avg Scrutiny TAT')}</p>
+                <p className="text-3xl font-black text-amber-600 mt-1">{translate('1.8 Days')}</p>
+                <p className="text-[11px] text-slate-500 mt-1">{translate('Illustrative value only')}</p>
               </div>
             </div>
 
             {/* State Distribution Table */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h3 className="font-bold text-sm text-slate-800 mb-4">State-wise Application & Clearance Telemetry</h3>
+              <h3 className="font-bold text-sm text-slate-800 mb-4">{translate('State-wise Application & Clearance Telemetry')}</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b">
                     <tr>
-                      <th className="p-3">State</th>
-                      <th className="p-3">NFST Applications</th>
-                      <th className="p-3">NOS Applications</th>
-                      <th className="p-3">PVTG Scholars</th>
-                      <th className="p-3">Disbursed Funds</th>
-                      <th className="p-3">Clearance Rate</th>
+                      <th className="p-3">{translate('State')}</th>
+                      <th className="p-3">{translate('NFST Applications')}</th>
+                      <th className="p-3">{translate('NOS Applications')}</th>
+                      <th className="p-3">{translate('PVTG Scholars')}</th>
+                      <th className="p-3">{translate('Disbursed Funds')}</th>
+                      <th className="p-3">{translate('Clearance Rate')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                     <tr>
-                      <td className="p-3 font-bold">Odisha</td>
+                      <td className="p-3 font-bold">{translate('Odisha')}</td>
                       <td className="p-3">185</td>
                       <td className="p-3">28</td>
                       <td className="p-3 font-bold text-purple-600">42</td>
@@ -988,7 +1080,7 @@ export default function App() {
                       <td className="p-3"><span className="text-emerald-600 font-bold">92%</span></td>
                     </tr>
                     <tr>
-                      <td className="p-3 font-bold">Jharkhand</td>
+                      <td className="p-3 font-bold">{translate('Jharkhand')}</td>
                       <td className="p-3">160</td>
                       <td className="p-3">22</td>
                       <td className="p-3 font-bold text-purple-600">31</td>
@@ -996,7 +1088,7 @@ export default function App() {
                       <td className="p-3"><span className="text-emerald-600 font-bold">88%</span></td>
                     </tr>
                     <tr>
-                      <td className="p-3 font-bold">Madhya Pradesh</td>
+                      <td className="p-3 font-bold">{translate('Madhya Pradesh')}</td>
                       <td className="p-3">140</td>
                       <td className="p-3">18</td>
                       <td className="p-3 font-bold text-purple-600">26</td>
@@ -1010,6 +1102,10 @@ export default function App() {
           </div>
         )}
       </main>
+      <footer className="portal-footer"><div className="max-w-7xl mx-auto px-6 py-5">
+        <strong>{translate('TRIBAL-SETU')}</strong> · {translate('Demo portal · Not an official government website')}<br />
+        {translate('Official scheme links verified 25 September 2026. Check the linked portal for eligibility, application route and current dates.')}
+      </div></footer>
 
       {/* ========================================================================= */}
       {/* REAL-TIME SMS & WHATSAPP DEFICIENCY NOTIFICATION MODAL                    */}
@@ -1022,37 +1118,37 @@ export default function App() {
                 <MessageSquare className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-slate-800">Automated Deficiency Alert Dispatched</h3>
-                <p className="text-[11px] text-slate-400">Multi-Channel Gateway (SMS & WhatsApp)</p>
+                <h3 className="font-bold text-sm text-slate-800">{translate('Automated Deficiency Alert Dispatched')}</h3>
+                <p className="text-[11px] text-slate-400">{translate('Multi-Channel Gateway (SMS & WhatsApp)')}</p>
               </div>
             </div>
 
             <div className="mt-4 p-4 bg-emerald-50/60 rounded-xl border border-emerald-200">
               <div className="flex justify-between items-center text-[10px] text-emerald-800 font-bold mb-1">
-                <span>GOV-MoTA ALERT</span>
-                <span>JUST NOW</span>
+                <span>{translate('GOV-MoTA ALERT')}</span>
+                <span>{translate('JUST NOW')}</span>
               </div>
               <p className="text-xs text-slate-800 leading-relaxed font-sans">
-                "Dear <span className="font-bold">{lastNotifiedApp.name}</span>, a clarification is required for your <span className="font-bold">{lastNotifiedApp.scheme}</span> application ({lastNotifiedApp.id}).
+                {translate('Dear')} <span className="font-bold">{lastNotifiedApp.name}</span>, {translate('a clarification is required for your')} <span className="font-bold">{lastNotifiedApp.scheme}</span> {translate('application')} ({lastNotifiedApp.id}).
                 <br /><br />
-                <span className="font-semibold text-amber-800">Remark: {lastNotifiedApp.note}</span>
+                <span className="font-semibold text-amber-800">{translate('Remark:')} {translate(lastNotifiedApp.note)}</span>
                 <br /><br />
-                Please re-upload your document within <span className="font-bold text-rose-600">14 Days</span> at: <span className="underline text-blue-600">mota.gov.in/resubmit</span> to prevent rejection."
+                {translate('This is a demo notification; use the official scheme portal.')}
               </p>
             </div>
 
             <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
               <span className="flex items-center gap-1 font-semibold text-amber-700">
-                <Clock className="w-3.5 h-3.5" /> 14-Day SLA Countdown Active
+                <Clock className="w-3.5 h-3.5" /> {translate('14-Day SLA Countdown Active')}
               </span>
-              <span className="text-emerald-700 font-bold">Delivery Status: Sent ✓✓</span>
+              <span className="text-emerald-700 font-bold">{translate('Example message preview')}</span>
             </div>
 
             <button
               onClick={() => setShowSmsModal(false)}
               className="mt-6 w-full bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs py-2.5 rounded-xl transition"
             >
-              Close & Return to Scrutiny Desk
+              {translate('Close & Return to Scrutiny Desk')}
             </button>
           </div>
         </div>
