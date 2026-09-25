@@ -2,21 +2,23 @@ import React, { useState } from 'react';
 import {
   ShieldCheck, BarChart3, UserCheck, Upload, CheckCircle2,
   AlertTriangle, XCircle, FileText, Sparkles, ArrowRight,
-  Award, DollarSign, Download, MessageSquare, Globe, Clock, Check
+  Award, DollarSign, Download, MessageSquare, Globe, Clock, Check,
+  ExternalLink, Search, Filter, HelpCircle, CheckCircle
 } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('applicant');
-  const [language, setLanguage] = useState('EN'); // 'EN' or 'HI'
+  const [language, setLanguage] = useState('EN');
   const [showSmsModal, setShowSmsModal] = useState(false);
   const [lastNotifiedApp, setLastNotifiedApp] = useState(null);
 
-  // Applications Database State
+  // Applications Database with Realistic Scholar Data & Photos
   const [applications, setApplications] = useState([
     {
       id: "APP-2026-NFST-0101",
       scheme: "NFST",
       name: "Ramesh Chandra Munda",
+      avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80",
       gender: "Male",
       subCaste: "Santhal",
       isPvtg: true,
@@ -24,12 +26,15 @@ export default function App() {
       income: 320000,
       institution: "IIT Bhubaneswar",
       degree: "Ph.D. Material Science",
-      meritScore: 89.5, // PG Marks %
+      meritScore: 89.5,
       status: "APPROVED_L1",
-      aiScore: 96,
-      tamperStatus: "CLEAN (Pass)",
+      aiScore: 98,
+      tamperStatus: "AUTHENTIC (PASS)",
       flags: [],
-      docName: "Caste_Certificate_Ramesh.pdf",
+      docName: "Caste_Cert_Odisha_Gov_2025.pdf",
+      certNumber: "OD/MAYUR/ST/2025/89214",
+      issueDate: "14-Jan-2025",
+      issuingOfficer: "Sub-Divisional Magistrate, Mayurbhanj",
       stipendStatus: "DISBURSED",
       guideApproved: true
     },
@@ -37,6 +42,7 @@ export default function App() {
       id: "APP-2026-NOS-0402",
       scheme: "NOS",
       name: "Sunita Marandi",
+      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
       gender: "Female",
       subCaste: "Munda",
       isPvtg: false,
@@ -44,12 +50,15 @@ export default function App() {
       income: 540000,
       institution: "Univ. of Melbourne (QS #14)",
       degree: "Master of Data Science",
-      meritScore: 94.0, // QS Rank inverse / score
+      meritScore: 94.0,
       status: "DEFICIENCY_RAISED",
-      aiScore: 48,
-      tamperStatus: "SUSPICIOUS (Outdated Format)",
-      flags: ["Income certificate issued outside active financial year (FY 2024-25)"],
-      docName: "Income_Cert_Old.jpg",
+      aiScore: 52,
+      tamperStatus: "SUSPICIOUS (Format Anomaly)",
+      flags: ["Income certificate financial year does not cover current FY 2025-26"],
+      docName: "Income_Cert_Scan_Old.jpg",
+      certNumber: "JH/RAN/INC/2024/00341",
+      issueDate: "10-Feb-2024 (EXPIRED)",
+      issuingOfficer: "Tehsildar Office, Ranchi",
       stipendStatus: "ON_HOLD",
       guideApproved: false
     },
@@ -57,6 +66,7 @@ export default function App() {
       id: "APP-2026-NFST-0305",
       scheme: "NFST",
       name: "Anita Kumari Gond",
+      avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
       gender: "Female",
       subCaste: "Gond",
       isPvtg: true,
@@ -66,10 +76,13 @@ export default function App() {
       degree: "Ph.D. Microbiology",
       meritScore: 92.4,
       status: "APPROVED_L1",
-      aiScore: 98,
-      tamperStatus: "CLEAN (Pass)",
+      aiScore: 97,
+      tamperStatus: "AUTHENTIC (PASS)",
       flags: [],
-      docName: "Caste_Cert_Anita.pdf",
+      docName: "Caste_Cert_MP_Gov.pdf",
+      certNumber: "MP/BHO/ST/2025/11094",
+      issueDate: "02-Dec-2024",
+      issuingOfficer: "SDM Bhopal Central",
       stipendStatus: "DISBURSED",
       guideApproved: true
     }
@@ -78,7 +91,7 @@ export default function App() {
   const [selectedAppId, setSelectedAppId] = useState("APP-2026-NFST-0101");
   const selectedApp = applications.find(a => a.id === selectedAppId) || applications[0];
 
-  // Form State
+  // Dynamic Form
   const [formScheme, setFormScheme] = useState("NFST");
   const [formName, setFormName] = useState("");
   const [formGender, setFormGender] = useState("Female");
@@ -93,7 +106,6 @@ export default function App() {
   const [submissionSuccess, setSubmissionSuccess] = useState(null);
   const [officerRemark, setOfficerRemark] = useState("");
 
-  // Handle Form Submit
   const handleFormSubmit = (e) => {
     e.preventDefault();
     const newId = `APP-2026-${formScheme}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -101,6 +113,9 @@ export default function App() {
       id: newId,
       scheme: formScheme,
       name: formName || "Tribal Scholar",
+      avatar: formGender === 'Female'
+        ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80"
+        : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
       gender: formGender,
       subCaste: formSubCaste,
       isPvtg: formIsPvtg,
@@ -110,10 +125,13 @@ export default function App() {
       degree: formDegree,
       meritScore: Number(formMarks),
       status: "PENDING_L1",
-      aiScore: 95,
-      tamperStatus: "CLEAN (Pass)",
+      aiScore: 96,
+      tamperStatus: "AUTHENTIC (PASS)",
       flags: [],
-      docName: uploadedFile ? uploadedFile.name : "Certificate_Scan.pdf",
+      docName: uploadedFile ? uploadedFile.name : "Caste_Certificate_Uploaded.pdf",
+      certNumber: `${formState.substring(0, 2).toUpperCase()}/REV/ST/2026/${Math.floor(10000 + Math.random() * 90000)}`,
+      issueDate: "20-Jan-2026",
+      issuingOfficer: `SDM Office, ${formState}`,
       stipendStatus: "PROCESSING",
       guideApproved: false
     };
@@ -123,17 +141,14 @@ export default function App() {
     setSubmissionSuccess(newApp);
   };
 
-  // Officer Actions
   const handleOfficerAction = (action) => {
     setApplications(applications.map(app => {
       if (app.id === selectedApp.id) {
-        if (action === "APPROVE") {
-          return { ...app, status: "APPROVED_L1", flags: [] };
-        }
+        if (action === "APPROVE") return { ...app, status: "APPROVED_L1", flags: [] };
         if (action === "DEFICIENCY") {
           const note = officerRemark || "Please re-upload a valid Income Certificate for FY 2025-26.";
           setLastNotifiedApp({ ...app, note });
-          setShowSmsModal(true); // Trigger SMS modal!
+          setShowSmsModal(true);
           return { ...app, status: "DEFICIENCY_RAISED", flags: [note] };
         }
         if (action === "REJECT") return { ...app, status: "REJECTED" };
@@ -143,7 +158,6 @@ export default function App() {
     setOfficerRemark("");
   };
 
-  // Export Merit List to CSV
   const exportMeritCSV = () => {
     const headers = "Rank,App ID,Name,Scheme,Tribe,PVTG,Gender,Merit Score,Status\n";
     const rows = [...applications]
@@ -160,84 +174,91 @@ export default function App() {
     a.click();
   };
 
-  // KPI calculations
   const totalApps = applications.length;
   const approvedApps = applications.filter(a => a.status === "APPROVED_L1").length;
   const femalePercentage = Math.round((applications.filter(a => a.gender === "Female").length / totalApps) * 100) || 0;
   const pvtgCount = applications.filter(a => a.isPvtg).length;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 font-sans">
+    <div className="min-h-screen flex flex-col bg-slate-100 font-sans selection:bg-emerald-100 selection:text-emerald-900">
 
       {/* ========================================================================= */}
-      {/* 1. TOP HEADER WITH BILINGUAL TOGGLE                                      */}
+      {/* 1. OFFICIAL GOV HEADER WITH EMBLEM & TRICOLOR TOP STRIP                   */}
       {/* ========================================================================= */}
-      <header className="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center shadow-sm sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-800 flex items-center justify-center text-white font-black text-xl shadow-md">
-            सं
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-black tracking-tight text-slate-800">TRIBAL-SETU</h1>
-              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
-                MoTA 2026
-              </span>
+      <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 via-white to-emerald-600"></div>
+
+      <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
+
+          {/* Ministry Brand & National Emblem */}
+          <div className="flex items-center gap-4">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"
+              alt="National Emblem of India"
+              className="h-12 w-auto object-contain drop-shadow-xs"
+            />
+            <div className="border-l border-slate-300 pl-4">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-black tracking-tight text-slate-900">TRIBAL-SETU</span>
+                <span className="bg-emerald-700 text-white text-[10px] font-extrabold px-2 py-0.5 rounded shadow-xs tracking-wider">
+                  MoTA • GOVT OF INDIA
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 font-medium">
+                {language === 'EN'
+                  ? 'Ministry of Tribal Affairs | National Fellowship & Overseas Scholarship Platform'
+                  : 'जनजातीय कार्य मंत्रालय | राष्ट्रीय अध्येतावृत्ति एवं विदेश छात्रवृत्ति मंच'}
+              </p>
             </div>
-            <p className="text-xs text-slate-500 font-medium">
-              {language === 'EN'
-                ? 'Ministry of Tribal Affairs | National Fellowship & Overseas Scholarship Platform'
-                : 'जनजातीय कार्य मंत्रालय | राष्ट्रीय अध्येतावृत्ति एवं विदेश छात्रवृत्ति मंच'}
-            </p>
-          </div>
-        </div>
-
-        {/* Portals Switcher + Language Toggle */}
-        <div className="flex items-center gap-3">
-          <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 gap-1">
-            <button
-              onClick={() => setActiveTab('applicant')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'applicant' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-            >
-              <UserCheck className="w-4 h-4 text-emerald-600" />
-              {language === 'EN' ? '1. Applicant Portal' : '१. आवेदक पोर्टल'}
-            </button>
-            <button
-              onClick={() => setActiveTab('scrutiny')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'scrutiny' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-            >
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              {language === 'EN' ? '2. AI Scrutiny Desk' : '२. एआई संवीक्षा'}
-              <span className="bg-emerald-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">{applications.length}</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('merit')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'merit' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-            >
-              <Award className="w-4 h-4 text-amber-600" />
-              {language === 'EN' ? '3. Merit & DBT Hub' : '३. मेरिट एवं डीबीटी'}
-            </button>
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'dashboard' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-            >
-              <BarChart3 className="w-4 h-4 text-blue-600" />
-              {language === 'EN' ? '4. Leadership Dashboard' : '४. नेतृत्व डैशबोर्ड'}
-            </button>
           </div>
 
-          {/* Hindi / English Toggle Button */}
-          <button
-            onClick={() => setLanguage(language === 'EN' ? 'HI' : 'EN')}
-            className="flex items-center gap-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 border border-slate-300 px-3 py-2 rounded-xl text-slate-700 transition"
-          >
-            <Globe className="w-3.5 h-3.5 text-emerald-700" />
-            {language === 'EN' ? 'हिन्दी' : 'English'}
-          </button>
+          {/* Navigation Controls */}
+          <div className="flex items-center gap-3">
+            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <button
+                onClick={() => setActiveTab('applicant')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'applicant' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+              >
+                <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                {language === 'EN' ? 'Applicant Portal' : 'आवेदक पोर्टल'}
+              </button>
+              <button
+                onClick={() => setActiveTab('scrutiny')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'scrutiny' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                {language === 'EN' ? 'AI Scrutiny Desk' : 'एआई संवीक्षा'}
+                <span className="bg-emerald-700 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold">{applications.length}</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('merit')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'merit' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+              >
+                <Award className="w-3.5 h-3.5 text-amber-600" />
+                {language === 'EN' ? 'Merit & DBT' : 'मेरिट एवं डीबीटी'}
+              </button>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'dashboard' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+              >
+                <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
+                {language === 'EN' ? 'Dashboard' : 'डैशबोर्ड'}
+              </button>
+            </div>
+
+            {/* Language Toggle */}
+            <button
+              onClick={() => setLanguage(language === 'EN' ? 'HI' : 'EN')}
+              className="flex items-center gap-1.5 text-xs font-bold bg-white hover:bg-slate-50 border border-slate-300 px-3 py-1.5 rounded-xl text-slate-700 shadow-xs transition"
+            >
+              <Globe className="w-3.5 h-3.5 text-emerald-700" />
+              {language === 'EN' ? 'हिन्दी' : 'English'}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -248,38 +269,66 @@ export default function App() {
         {/* TAB 1: APPLICANT PORTAL                                                   */}
         {/* ========================================================================= */}
         {activeTab === 'applicant' && (
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-4xl mx-auto space-y-6">
+
+            {/* Hero Motivational Banner */}
+            <div className="relative rounded-2xl overflow-hidden shadow-md bg-gradient-to-r from-emerald-950 via-emerald-900 to-slate-900 text-white p-8">
+              <div className="relative z-10 max-w-xl">
+                <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider">
+                  Academic Year 2026-27 Registrations Open
+                </span>
+                <h2 className="text-2xl font-black mt-3 leading-tight">
+                  Empowering Scheduled Tribe Scholars with World-Class Higher Education
+                </h2>
+                <p className="text-xs text-emerald-200/90 mt-2 leading-relaxed">
+                  Fast-track digital processing with automated AI document verification for the National Fellowship (NFST) and National Overseas Scholarship (NOS).
+                </p>
+              </div>
+              <img
+                src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=500&auto=format&fit=crop&q=80"
+                alt="Students studying"
+                className="absolute right-0 top-0 bottom-0 w-1/3 object-cover opacity-20 mask-radial"
+              />
+            </div>
+
             {submissionSuccess ? (
               <div className="bg-white p-8 rounded-2xl shadow-sm border border-emerald-200 text-center animate-fadeIn">
-                <CheckCircle2 className="w-16 h-16 text-emerald-600 mx-auto mb-3" />
+                <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mx-auto mb-3 shadow-inner">
+                  <CheckCircle2 className="w-10 h-10" />
+                </div>
                 <h2 className="text-2xl font-black text-slate-800">
-                  {language === 'EN' ? 'Application Submitted to MoTA!' : 'आवेदन सफलतापूर्वक जमा हो गया!'}
+                  {language === 'EN' ? 'Application Registered with MoTA!' : 'आवेदन सफलतापूर्वक पंजीकृत हो गया!'}
                 </h2>
-                <p className="text-sm text-slate-600 mt-1">Application Ref: <span className="font-mono font-bold text-emerald-700">{submissionSuccess.id}</span></p>
+                <p className="text-xs text-slate-500 mt-1">Application Reference No: <span className="font-mono font-bold text-emerald-700">{submissionSuccess.id}</span></p>
 
-                <div className="mt-6 bg-slate-50 p-5 rounded-xl border border-slate-200 text-left max-w-md mx-auto space-y-2.5">
-                  <div className="flex items-center justify-between font-bold text-xs text-slate-700 pb-2 border-b border-slate-200">
-                    <span className="flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-amber-500" /> Instant AI Verification</span>
-                    <span className="text-emerald-600">{submissionSuccess.aiScore}% Match</span>
+                {/* Digital Verification Receipt */}
+                <div className="mt-6 bg-slate-50 p-6 rounded-2xl border border-slate-200 text-left max-w-lg mx-auto space-y-3">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                    <span className="font-bold text-xs text-slate-700 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-500" /> Instant AI Scrutiny Report
+                    </span>
+                    <span className="bg-emerald-100 text-emerald-800 font-black text-xs px-2.5 py-0.5 rounded-full">
+                      {submissionSuccess.aiScore}% Match
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-600">
-                    <span>Document Tamper Check:</span>
-                    <span className="font-bold text-emerald-600">PASS (No Alterations)</span>
+                    <span>Document Tamper Status:</span>
+                    <span className="font-bold text-emerald-600">PASS (Zero Metadata Alteration)</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-600">
-                    <span>Caste e-District Cross-Check:</span>
-                    <span className="font-bold text-emerald-600">State Registry Verified</span>
+                    <span>State Revenue Registry Match:</span>
+                    <span className="font-bold text-emerald-600">e-District Live Signature Valid</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-600">
-                    <span>Assigned Queue:</span>
-                    <span className="font-bold text-blue-600">Level-1 Desk Officer Scrutiny</span>
+                    <span>Workflow Stage:</span>
+                    <span className="font-bold text-blue-700">Assigned to Level-1 Desk Officer</span>
                   </div>
                 </div>
 
                 <div className="mt-6 flex justify-center gap-3">
                   <button
                     onClick={() => setActiveTab('scrutiny')}
-                    className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-6 py-3 rounded-xl flex items-center gap-2 shadow-md transition"
+                    className="bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold px-6 py-3 rounded-xl flex items-center gap-2 shadow-md transition"
                   >
                     View in Officer Scrutiny Desk <ArrowRight className="w-4 h-4" />
                   </button>
@@ -294,51 +343,69 @@ export default function App() {
             ) : (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
                 <div className="border-b border-slate-100 pb-4 mb-6">
-                  <h2 className="text-xl font-black text-slate-800">
-                    {language === 'EN' ? 'Unified Scholarship & Fellowship Application' : 'एकीकृत अध्येतावृत्ति एवं छात्रवृत्ति आवेदन'}
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-1">Configurable Scheme Engine: Automatically adapts eligibility rules & document requirements.</p>
+                  <h3 className="text-lg font-black text-slate-800">
+                    {language === 'EN' ? 'Unified Scheme Application' : 'एकीकृत योजना आवेदन पत्र'}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Configurable Scheme Engine: Field criteria and document rules change based on your selected scheme.</p>
                 </div>
 
                 <form onSubmit={handleFormSubmit} className="space-y-6">
-                  {/* Scheme Selection */}
+
+                  {/* Scheme Selection Cards with Rich Photos */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Select Target Scheme</label>
+                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Select Scheme</label>
                     <div className="grid grid-cols-2 gap-4">
+
+                      {/* NFST Card */}
                       <div
                         onClick={() => setFormScheme('NFST')}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition ${formScheme === 'NFST' ? 'border-emerald-600 bg-emerald-50/50' : 'border-slate-200 hover:border-slate-300'
+                        className={`relative rounded-xl border-2 p-5 cursor-pointer transition overflow-hidden group ${formScheme === 'NFST' ? 'border-emerald-600 bg-emerald-50/60 shadow-sm' : 'border-slate-200 hover:border-slate-300 bg-white'
                           }`}
                       >
-                        <div className="flex justify-between">
-                          <span className="font-bold text-sm text-slate-800">NFST (India)</span>
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">750 Slots</span>
+                        <div className="flex items-start justify-between relative z-10">
+                          <div>
+                            <span className="font-black text-slate-900 text-sm">NFST (National Fellowship)</span>
+                            <span className="block text-[10px] font-bold text-emerald-700 mt-0.5">For Higher Education in India</span>
+                          </div>
+                          <span className="bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            750 Slots
+                          </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">National Fellowship for Ph.D. in India. ₹37,000/mo JRF stipend + HRA.</p>
+                        <p className="text-xs text-slate-500 mt-2 relative z-10 leading-relaxed">
+                          For ST scholars pursuing regular M.Phil/Ph.D. in UGC/AICTE recognized universities and IITs. <span className="font-semibold text-slate-700">₹37,000/mo JRF stipend + HRA</span>.
+                        </p>
                       </div>
 
+                      {/* NOS Card */}
                       <div
                         onClick={() => setFormScheme('NOS')}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition ${formScheme === 'NOS' ? 'border-emerald-600 bg-emerald-50/50' : 'border-slate-200 hover:border-slate-300'
+                        className={`relative rounded-xl border-2 p-5 cursor-pointer transition overflow-hidden group ${formScheme === 'NOS' ? 'border-blue-600 bg-blue-50/60 shadow-sm' : 'border-slate-200 hover:border-slate-300 bg-white'
                           }`}
                       >
-                        <div className="flex justify-between">
-                          <span className="font-bold text-sm text-slate-800">NOS (Overseas)</span>
-                          <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded">100 Slots</span>
+                        <div className="flex items-start justify-between relative z-10">
+                          <div>
+                            <span className="font-black text-slate-900 text-sm">NOS (Overseas Scholarship)</span>
+                            <span className="block text-[10px] font-bold text-blue-700 mt-0.5">For Studies Abroad</span>
+                          </div>
+                          <span className="bg-blue-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            100 Slots
+                          </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">National Overseas Scholarship for Masters/Ph.D. in Top 500 QS Universities.</p>
+                        <p className="text-xs text-slate-500 mt-2 relative z-10 leading-relaxed">
+                          For Master’s and Ph.D. abroad in Top 500 QS World Ranked Universities. <span className="font-semibold text-slate-700">$15,400/yr + Full Tuition + Flights</span>.
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Personal Fields */}
+                  {/* Personal Details */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-slate-600 mb-1">Scholar Full Name</label>
                       <input
                         required
                         type="text"
-                        placeholder="As on Class X / Aadhaar"
+                        placeholder="e.g. Birsa Purty"
                         value={formName}
                         onChange={e => setFormName(e.target.value)}
                         className="w-full text-xs p-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -381,6 +448,7 @@ export default function App() {
                         <option>Jharkhand</option>
                         <option>Madhya Pradesh</option>
                         <option>Chhattisgarh</option>
+                        <option>Rajasthan</option>
                         <option>Maharashtra</option>
                       </select>
                     </div>
@@ -396,24 +464,28 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* PVTG Checkbox */}
-                  <div className="p-3.5 bg-purple-50 rounded-xl border border-purple-200">
-                    <label className="flex items-center gap-2 text-xs font-bold text-purple-900 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formIsPvtg}
-                        onChange={e => setFormIsPvtg(e.target.checked)}
-                        className="w-4 h-4 text-purple-600 rounded"
-                      />
-                      Candidate belongs to Particularly Vulnerable Tribal Group (PVTG Priority)
-                    </label>
+                  {/* PVTG Priority Checkbox */}
+                  <div className="p-4 bg-purple-50/70 rounded-xl border border-purple-200 flex items-center justify-between">
+                    <div>
+                      <label className="flex items-center gap-2 text-xs font-bold text-purple-900 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formIsPvtg}
+                          onChange={e => setFormIsPvtg(e.target.checked)}
+                          className="w-4 h-4 text-purple-700 rounded"
+                        />
+                        Scholar belongs to a Particularly Vulnerable Tribal Group (PVTG Priority)
+                      </label>
+                      <p className="text-[11px] text-purple-700/80 ml-6 mt-0.5">MoTA gives special priority allocation to 75 recognized PVTG communities across India.</p>
+                    </div>
+                    <span className="text-[10px] font-extrabold bg-purple-200 text-purple-900 px-2 py-0.5 rounded">STATUTORY QUOTA</span>
                   </div>
 
-                  {/* Academic Details + Merit Marks */}
+                  {/* Dynamic Academic Details */}
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-slate-600 mb-1">
-                        {formScheme === 'NFST' ? 'Indian University' : 'Foreign University'}
+                        {formScheme === 'NFST' ? 'Host Indian Institute' : 'Foreign University (Top 500 QS)'}
                       </label>
                       <input
                         required
@@ -424,7 +496,7 @@ export default function App() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Research Degree</label>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Enrolled Degree</label>
                       <input
                         required
                         type="text"
@@ -435,7 +507,7 @@ export default function App() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-slate-600 mb-1">
-                        {formScheme === 'NFST' ? 'PG Qualifying Marks (%)' : 'QS Ranking / Score'}
+                        {formScheme === 'NFST' ? 'Qualifying Exam Marks (%)' : 'Foreign University QS Rank'}
                       </label>
                       <input
                         required
@@ -448,23 +520,25 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* File Upload */}
-                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-emerald-500 transition">
-                    <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                    <p className="text-xs font-bold text-slate-700">Attach Verified ST Caste Certificate</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Supports PDF, PNG, JPG. Instant OCR & Tamper Analysis will run automatically.</p>
+                  {/* Document Upload Area */}
+                  <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-emerald-600 transition bg-slate-50/50">
+                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 mx-auto mb-2">
+                      <Upload className="w-6 h-6" />
+                    </div>
+                    <p className="text-xs font-bold text-slate-800">Attach Verified ST Caste Certificate</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Supports PDF, PNG, JPG. Optical Character Recognition (OCR) will run automatically.</p>
                     <input
                       type="file"
                       onChange={e => setUploadedFile(e.target.files[0])}
-                      className="mt-3 text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                      className="mt-3 text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-800 file:text-white hover:file:bg-emerald-900 cursor-pointer"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs py-3.5 rounded-xl shadow-md transition flex items-center justify-center gap-2"
+                    className="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs py-3.5 rounded-xl shadow-md transition flex items-center justify-center gap-2"
                   >
-                    <Sparkles className="w-4 h-4" /> Run AI Scrutiny & Submit Application
+                    <Sparkles className="w-4 h-4 text-amber-300" /> Run AI Scrutiny & Submit Application
                   </button>
                 </form>
               </div>
@@ -473,97 +547,192 @@ export default function App() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 2: AI SCRUTINY DESK WITH SPLIT-SCREEN                                 */}
+        {/* TAB 2: AI SCRUTINY DESK WITH REALISTIC CERTIFICATE PREVIEW                */}
         {/* ========================================================================= */}
         {activeTab === 'scrutiny' && (
-          <div className="grid grid-cols-12 gap-5 h-[calc(100vh-125px)]">
-            {/* Queue List */}
+          <div className="grid grid-cols-12 gap-5 h-[calc(100vh-130px)]">
+
+            {/* Left Queue with Scholar Photos */}
             <div className="col-span-3 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col">
               <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Scrutiny Queue</span>
-                <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-bold">{applications.length} Assigned</span>
+                <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Pending Queue</span>
+                <span className="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-bold">{applications.length} Files</span>
               </div>
 
-              <div className="space-y-2 mt-3 overflow-y-auto flex-1 pr-1">
+              <div className="space-y-2.5 mt-3 overflow-y-auto flex-1 pr-1">
                 {applications.map(app => (
                   <div
                     key={app.id}
                     onClick={() => setSelectedAppId(app.id)}
-                    className={`p-3 rounded-xl border cursor-pointer transition ${selectedApp.id === app.id ? 'border-emerald-600 bg-emerald-50/50 shadow-sm' : 'border-slate-200 hover:border-slate-300'
+                    className={`p-3 rounded-xl border cursor-pointer transition flex items-center gap-3 ${selectedApp.id === app.id ? 'border-emerald-600 bg-emerald-50/50 shadow-sm' : 'border-slate-200 hover:border-slate-300'
                       }`}
                   >
-                    <div className="flex justify-between items-center">
-                      <span className="font-mono text-[11px] font-bold text-slate-500">{app.id}</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${app.status === 'APPROVED_L1' ? 'bg-emerald-100 text-emerald-800' :
-                          app.status === 'DEFICIENCY_RAISED' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
-                        {app.status}
-                      </span>
-                    </div>
-                    <p className="font-bold text-slate-800 text-xs mt-1.5">{app.name}</p>
-                    <div className="flex justify-between text-[11px] text-slate-500 mt-2">
-                      <span>{app.scheme} • {app.subCaste}</span>
-                      <span className="font-bold text-emerald-600">{app.aiScore}% Match</span>
+                    <img
+                      src={app.avatar}
+                      alt={app.name}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-emerald-600/40"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <span className="font-mono text-[10px] font-bold text-slate-400">{app.id}</span>
+                        <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${app.status === 'APPROVED_L1' ? 'bg-emerald-100 text-emerald-800' :
+                            app.status === 'DEFICIENCY_RAISED' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+                          }`}>
+                          {app.status}
+                        </span>
+                      </div>
+                      <p className="font-bold text-slate-800 text-xs truncate mt-0.5">{app.name}</p>
+                      <div className="flex justify-between text-[10px] text-slate-500 mt-1">
+                        <span>{app.scheme} • {app.subCaste}</span>
+                        <span className="font-bold text-emerald-700">{app.aiScore}% Match</span>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Split Screen Document Viewer with Bounding Boxes */}
-            <div className="col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col">
-              <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                <span className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-emerald-600" />
-                  Certificate Preview: {selectedApp.docName}
+            {/* Middle: REALISTIC SCANNED CERTIFICATE WITH OFFICIAL SEALS & GLOWING BOUNDING BOXES */}
+            <div className="col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col overflow-hidden">
+              <div className="flex justify-between items-center pb-2.5 border-b border-slate-100">
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-2 truncate">
+                  <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                  Doc: {selectedApp.docName}
                 </span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${selectedApp.tamperStatus.includes('Pass') ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${selectedApp.tamperStatus.includes('PASS') ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
                   }`}>
-                  Tamper Check: {selectedApp.tamperStatus}
+                  {selectedApp.tamperStatus}
                 </span>
               </div>
 
-              <div className="flex-1 bg-slate-50 rounded-xl border border-dashed border-slate-300 p-5 mt-3 relative flex flex-col justify-center items-center text-center">
-                <div className="w-full max-w-sm bg-white p-6 rounded-lg shadow-sm border border-slate-200 relative">
-                  <div className="text-[10px] uppercase font-bold text-slate-400 tracking-widest pb-2 border-b">
-                    Government of India • Scheduled Tribe Certificate
+              {/* Realistic Scanned Government Certificate Simulation */}
+              <div className="flex-1 bg-amber-50/40 rounded-xl border border-amber-200/60 p-5 mt-2.5 overflow-y-auto relative shadow-inner">
+                <div className="bg-[#fffef8] p-6 rounded-lg border border-slate-300 shadow-md relative min-h-[460px] text-slate-800 font-serif text-[11px] leading-relaxed">
+
+                  {/* Watermark Emblem */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5">
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"
+                      alt="Watermark"
+                      className="w-64 h-64 object-contain"
+                    />
                   </div>
 
-                  <div className="mt-4 p-2 bg-emerald-50 border-2 border-emerald-500 rounded relative group">
-                    <span className="absolute -top-2 left-2 bg-emerald-600 text-white text-[8px] font-mono px-1 rounded">OCR: NAME (100% Match)</span>
-                    <p className="font-serif font-bold text-sm text-slate-800">{selectedApp.name}</p>
+                  {/* Certificate Top Header */}
+                  <div className="text-center pb-3 border-b-2 border-slate-800 relative z-10">
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"
+                      alt="State Emblem"
+                      className="h-9 mx-auto mb-1 opacity-90"
+                    />
+                    <p className="font-sans text-[10px] font-black uppercase tracking-widest text-slate-800">
+                      GOVERNMENT OF {selectedApp.state.toUpperCase()}
+                    </p>
+                    <p className="font-sans text-[9px] font-bold text-slate-600">OFFICE OF THE SUB-DIVISIONAL MAGISTRATE</p>
+                    <p className="font-sans text-[11px] font-black underline tracking-wide mt-1 text-slate-900">
+                      CERTIFICATE OF SCHEDULED TRIBE CASTE
+                    </p>
                   </div>
 
-                  <div className="mt-3 p-2 bg-emerald-50 border-2 border-emerald-500 rounded relative">
-                    <span className="absolute -top-2 left-2 bg-emerald-600 text-white text-[8px] font-mono px-1 rounded">OCR: SUB-CASTE</span>
-                    <p className="font-serif text-xs font-semibold text-slate-700">Tribe: {selectedApp.subCaste} Community</p>
+                  {/* Cert Registration Barcode */}
+                  <div className="flex justify-between items-center my-3 text-[9px] font-sans text-slate-600 border-b border-dashed border-slate-300 pb-2 relative z-10">
+                    <div>
+                      <p><span className="font-bold">Cert No:</span> {selectedApp.certNumber}</p>
+                      <p><span className="font-bold">Issue Date:</span> {selectedApp.issueDate}</p>
+                    </div>
+                    <div className="text-right">
+                      {/* Barcode graphic */}
+                      <div className="font-mono text-xs tracking-widest bg-slate-900 text-white px-2 py-0.5 rounded">
+                        ||| || |||| | ||||| |||
+                      </div>
+                      <span className="text-[8px] text-slate-400 font-mono">e-District Digital Barcode</span>
+                    </div>
                   </div>
 
-                  <div className="mt-3 p-2 bg-blue-50 border-2 border-blue-400 rounded relative">
-                    <span className="absolute -top-2 left-2 bg-blue-600 text-white text-[8px] font-mono px-1 rounded">e-District Digital Signature</span>
-                    <p className="text-[10px] text-slate-500">SDM Office, {selectedApp.state} • Valid for Central Schemes</p>
+                  {/* Certificate Body with Cyber AI Bounding Boxes */}
+                  <div className="space-y-3 relative z-10 font-serif text-slate-800 leading-normal">
+                    <p>
+                      This is to certify that Shri / Smt / Kumari
+                    </p>
+
+                    {/* AI Bounding Box: Scholar Name */}
+                    <div className="p-2 bg-emerald-100/50 border-2 border-emerald-500 rounded relative shadow-xs">
+                      <span className="absolute -top-2 left-2 bg-emerald-700 text-white text-[8px] font-sans font-bold px-1.5 py-0.2 rounded shadow-xs">
+                        AI OCR: NAME (99.8% Match)
+                      </span>
+                      <p className="font-bold text-sm text-slate-900 font-sans tracking-wide">
+                        {selectedApp.name}
+                      </p>
+                    </div>
+
+                    <p>
+                      residing in the State of <span className="font-bold underline">{selectedApp.state}</span> belongs to the community recognized as:
+                    </p>
+
+                    {/* AI Bounding Box: Sub-Tribe */}
+                    <div className="p-2 bg-emerald-100/50 border-2 border-emerald-500 rounded relative shadow-xs">
+                      <span className="absolute -top-2 left-2 bg-emerald-700 text-white text-[8px] font-sans font-bold px-1.5 py-0.2 rounded shadow-xs">
+                        AI OCR: RECOGNIZED TRIBE
+                      </span>
+                      <p className="font-bold text-xs text-slate-900 font-sans">
+                        {selectedApp.subCaste} (Scheduled Tribe under the Constitution Order 1950)
+                      </p>
+                    </div>
+
+                    <p className="text-[10px] text-slate-600 italic">
+                      This certificate is digitally authenticated by the state portal and valid across all Central Government Fellowship and Educational Schemes.
+                    </p>
+                  </div>
+
+                  {/* Stamp & Seal Simulation */}
+                  <div className="mt-6 pt-4 flex justify-between items-end relative z-10">
+                    {/* Official Round Ink Seal */}
+                    <div className="relative w-20 h-20 rounded-full border-2 border-purple-700 flex items-center justify-center text-center p-1 transform -rotate-12 opacity-85">
+                      <div className="w-16 h-16 rounded-full border border-purple-600 flex flex-col justify-center items-center text-[7px] font-bold font-sans text-purple-800 leading-none">
+                        <span>GOVT OF INDIA</span>
+                        <span className="text-[6px] my-0.5">★ SEAL ★</span>
+                        <span>SDM OFFICE</span>
+                      </div>
+                    </div>
+
+                    {/* Signature */}
+                    <div className="text-right font-sans">
+                      <div className="font-serif italic text-blue-900 font-bold text-sm pb-1">
+                        S. K. Mohapatra
+                      </div>
+                      <p className="text-[9px] font-bold text-slate-800">{selectedApp.issuingOfficer}</p>
+                      <p className="text-[8px] text-slate-500">Government of {selectedApp.state}</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* AI Decision Console */}
+            {/* Right: AI Evaluation & Action Console */}
             <div className="col-span-4 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col justify-between">
               <div>
                 <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                  <h3 className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-amber-500" /> AI Scrutiny Assessment
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={selectedApp.avatar}
+                      alt={selectedApp.name}
+                      className="w-9 h-9 rounded-full object-cover border border-slate-200"
+                    />
+                    <div>
+                      <h3 className="font-bold text-xs text-slate-800 leading-tight">{selectedApp.name}</h3>
+                      <p className="text-[10px] text-slate-400 font-mono">{selectedApp.id}</p>
+                    </div>
+                  </div>
                   <div className="text-right">
-                    <span className="text-xl font-black text-emerald-600">{selectedApp.aiScore}%</span>
-                    <p className="text-[9px] text-slate-400 uppercase font-bold">Confidence</p>
+                    <span className="text-xl font-black text-emerald-700">{selectedApp.aiScore}%</span>
+                    <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">AI Confidence</p>
                   </div>
                 </div>
 
                 <div className="space-y-2.5 mt-3">
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
                     <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Applicant Claim vs Doc</p>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase">Candidate Claim vs Certificate</p>
                       <p className="text-xs font-bold text-slate-800">{selectedApp.name}</p>
                     </div>
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -571,7 +740,7 @@ export default function App() {
 
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
                     <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Tribe / Quota Category</p>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase">Affirmative Category</p>
                       <p className="text-xs font-bold text-slate-800">{selectedApp.subCaste} {selectedApp.isPvtg && "• PVTG Priority"}</p>
                     </div>
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -579,7 +748,7 @@ export default function App() {
 
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
                     <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Reported Family Income</p>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase">Verified Annual Income</p>
                       <p className="text-xs font-bold text-slate-800">₹{selectedApp.income.toLocaleString('en-IN')}</p>
                     </div>
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -602,7 +771,7 @@ export default function App() {
               <div className="pt-4 border-t border-slate-100 space-y-2.5">
                 <input
                   type="text"
-                  placeholder="Officer remarks / Deficiency note..."
+                  placeholder="Officer remarks / Deficiency explanation..."
                   value={officerRemark}
                   onChange={e => setOfficerRemark(e.target.value)}
                   className="w-full text-xs p-2.5 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -610,7 +779,7 @@ export default function App() {
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => handleOfficerAction("APPROVE")}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1 transition shadow-sm"
+                    className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1 transition shadow-sm"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" /> Approve L1
                   </button>
@@ -633,7 +802,7 @@ export default function App() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 3: AUTOMATED MERIT ENGINE & POST-AWARD DBT DISBURSEMENT               */}
+        {/* TAB 3: AUTOMATED MERIT ENGINE & DBT HUB                                  */}
         {/* ========================================================================= */}
         {activeTab === 'merit' && (
           <div className="space-y-6">
@@ -648,13 +817,13 @@ export default function App() {
               </div>
               <button
                 onClick={exportMeritCSV}
-                className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition"
+                className="bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition"
               >
                 <Download className="w-4 h-4" /> Export Merit List (CSV)
               </button>
             </div>
 
-            {/* Merit Ranking Table */}
+            {/* Merit Ranking Table with Scholar Photos */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
               <h3 className="font-bold text-sm text-slate-800 mb-3 flex items-center gap-2">
                 <Award className="w-4 h-4 text-amber-500" />
@@ -665,14 +834,13 @@ export default function App() {
                   <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b">
                     <tr>
                       <th className="p-3">Rank</th>
-                      <th className="p-3">Application ID</th>
-                      <th className="p-3">Scholar Name</th>
+                      <th className="p-3">Scholar</th>
                       <th className="p-3">Scheme</th>
                       <th className="p-3">Tribe</th>
                       <th className="p-3">Affirmative Quota</th>
                       <th className="p-3">Merit Score</th>
                       <th className="p-3">Scrutiny Status</th>
-                      <th className="p-3">Monthly Fellowship (DBT)</th>
+                      <th className="p-3">Fellowship Stipend</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -681,8 +849,13 @@ export default function App() {
                       .map((app, index) => (
                         <tr key={app.id} className="hover:bg-slate-50/50">
                           <td className="p-3 font-bold text-emerald-800">#{index + 1}</td>
-                          <td className="p-3 font-mono text-[11px] text-slate-500">{app.id}</td>
-                          <td className="p-3 font-bold text-slate-800">{app.name}</td>
+                          <td className="p-3 flex items-center gap-2.5">
+                            <img src={app.avatar} alt={app.name} className="w-8 h-8 rounded-full object-cover" />
+                            <div>
+                              <p className="font-bold text-slate-800 leading-tight">{app.name}</p>
+                              <p className="text-[10px] text-slate-400 font-mono">{app.id}</p>
+                            </div>
+                          </td>
                           <td className="p-3">
                             <span className={`px-2 py-0.5 rounded font-bold text-[10px] ${app.scheme === 'NFST' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>
                               {app.scheme}
@@ -699,7 +872,7 @@ export default function App() {
                               {app.status}
                             </span>
                           </td>
-                          <td className="p-3 font-mono font-bold text-emerald-600">
+                          <td className="p-3 font-mono font-bold text-emerald-700">
                             {app.scheme === 'NFST' ? '₹37,000 / mo' : '$15,400 / yr'}
                           </td>
                         </tr>
@@ -709,13 +882,13 @@ export default function App() {
               </div>
             </div>
 
-            {/* Post-Award Fellowship Disbursement Life Cycle */}
+            {/* Post-Award Fellowship Lifecycle Cards */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
               <h3 className="font-bold text-sm text-slate-800 mb-2 flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-emerald-600" />
                 Post-Award Fellowship Lifecycle (PFMS & DBT Tribal Automation)
               </h3>
-              <p className="text-xs text-slate-400 mb-4">Life after selection: Automated supervisor digital sign-off and monthly stipend credits.</p>
+              <p className="text-xs text-slate-400 mb-4">Continuous digital oversight: University joining verification, bi-annual guide sign-offs, and automated stipend disbursements.</p>
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
@@ -731,7 +904,7 @@ export default function App() {
                     <span className="text-xs font-bold text-slate-700">2. Research Guide Approval</span>
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1">Bi-annual progress & attendance certified by Ph.D. guide.</p>
+                  <p className="text-[11px] text-slate-500 mt-1">Bi-annual progress & attendance certified digitally by Ph.D. guide.</p>
                 </div>
 
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
@@ -739,7 +912,7 @@ export default function App() {
                     <span className="text-xs font-bold text-slate-700">3. PFMS DBT Credit</span>
                     <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">DIRECT TO AADHAAR</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1">Automated electronic payment advice pushed to PFMS portal.</p>
+                  <p className="text-[11px] text-slate-500 mt-1">Automated electronic payment advice pushed to Public Financial Management System.</p>
                 </div>
               </div>
             </div>
@@ -747,7 +920,7 @@ export default function App() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 4: EXECUTIVE LEADERSHIP DASHBOARD                                     */}
+        {/* TAB 4: LEADERSHIP DASHBOARD                                               */}
         {/* ========================================================================= */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
@@ -854,7 +1027,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Mobile Notification Preview */}
             <div className="mt-4 p-4 bg-emerald-50/60 rounded-xl border border-emerald-200">
               <div className="flex justify-between items-center text-[10px] text-emerald-800 font-bold mb-1">
                 <span>GOV-MoTA ALERT</span>
